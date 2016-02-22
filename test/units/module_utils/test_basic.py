@@ -325,15 +325,27 @@ class TestModuleUtilsBasic(unittest.TestCase):
         )
 
         # we first test the cases where the python selinux lib is
-        # not installed, which has two paths: one in which the system
-        # does have selinux installed (and the selinuxenabled command
-        # is present and returns 0 when run), or selinux is not installed
+        # not installed, which has 4 paths:
+        #
+        # - selinux is installed and getenforce command returns 'Enforcing'
+        # - selinux is installed and getenforce command returns 'Permissive'
+        # - selinux is installed and getenforce command returns 'Disabled'
+        # - selinux is not installed
+        #
         basic.HAVE_SELINUX = False
         am.get_bin_path = MagicMock()
-        am.get_bin_path.return_value = '/path/to/selinuxenabled'
+        am.get_bin_path.return_value = '/path/to/getenforce'
         am.run_command = MagicMock()
-        am.run_command.return_value=(0, '', '')
+
+        am.run_command.return_value=(0, 'Enforcing\n', '')
         self.assertRaises(SystemExit, am.selinux_enabled)
+
+        am.run_command.return_value=(0, 'Permissive\n', '')
+        self.assertEqual(am.selinux_enabled(), False)
+
+        am.run_command.return_value=(0, 'Disabled\n', '')
+        self.assertEqual(am.selinux_enabled(), False)
+
         am.get_bin_path.return_value = None
         self.assertEqual(am.selinux_enabled(), False)
 
