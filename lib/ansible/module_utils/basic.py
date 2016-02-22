@@ -652,11 +652,11 @@ class AnsibleModule(object):
 
     def selinux_enabled(self):
         if not HAVE_SELINUX:
-            seenabled = self.get_bin_path('selinuxenabled')
-            if seenabled is not None:
-                (rc,out,err) = self.run_command(seenabled)
-                if rc == 0:
-                    self.fail_json(msg="Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
+            getenforce = self.get_bin_path('getenforce')
+            if getenforce is not None:
+                (rc, out, err) = self.run_command(getenforce)
+                if out.strip() == 'Enforcing':
+                    self.fail_json(msg="Aborting, target enforces selinux but python bindings (libselinux-python) aren't installed!")
             return False
         if selinux.is_selinux_enabled() == 1:
             return True
